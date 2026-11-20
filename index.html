@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#0b0d12">
+<meta name="theme-color" content="#030108">
 <meta name="description" content="Все мои ссылки в одном месте.">
 <title>Наначи — ссылки</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔊</text></svg>">
@@ -13,8 +13,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0b0d12;
-    --card:rgba(255,255,255,.045);
+    --bg:#030108;
+    --card:rgba(10,8,24,.42);
     --border:rgba(255,255,255,.09);
     --text:#eef1f7;
     --muted:#9aa3b5;
@@ -22,23 +22,23 @@
     --accent2:#38e0c8;
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%}
+  html{scroll-behavior:smooth}
   body{
     font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
     background:var(--bg);
     color:var(--text);
-    min-height:100vh;
-    display:flex;align-items:center;justify-content:center;
-    padding:32px 20px;
     overflow-x:hidden;
     -webkit-font-smoothing:antialiased;
   }
 
-  /* ── фоновые пятна ── */
-  .blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:.35;z-index:-1;pointer-events:none}
-  .blob-1{width:420px;height:420px;background:#5b3df5;top:-120px;left:-100px;animation:float 12s ease-in-out infinite}
-  .blob-2{width:380px;height:380px;background:#0e7f74;bottom:-120px;right:-80px;animation:float 14s ease-in-out infinite reverse}
-  @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,40px)}}
+  /* ── общая структура: два экрана ── */
+  .screen{
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:32px 20px;
+    position:relative;
+  }
+  .screen-top{transition:background .4s ease}
 
   /* ── карточка ── */
   .card{
@@ -51,6 +51,10 @@
     -webkit-backdrop-filter:blur(20px);
     box-shadow:0 24px 60px rgba(0,0,0,.45);
     text-align:center;
+    /* уход при прокрутке: растворяется и отлетает вглубь */
+    transform-origin:top center;
+    transition:transform .1s linear, opacity .1s linear, filter .1s linear;
+    will-change:transform, opacity, filter;
   }
 
   /* ── аватар ── */
@@ -76,21 +80,23 @@
   }
   .handle{color:var(--muted);font-size:14px;margin-top:6px;font-weight:500}
 
-  /* ── плашка про синтез речи ── */
+  /* ── плашка про синтез речи (главный акцент карточки) ── */
   .note{
-    display:flex;gap:14px;align-items:flex-start;
+    display:flex;gap:16px;align-items:center;
     text-align:left;
-    background:rgba(124,92,255,.08);
-    border:1px solid rgba(124,92,255,.22);
-    padding:16px;
-    border-radius:16px;
-    font-size:14.5px;line-height:1.55;color:#cdd4e4;
-    margin:24px 0;
+    background:linear-gradient(135deg, rgba(124,92,255,.22), rgba(56,224,200,.14));
+    border:1px solid rgba(124,92,255,.55);
+    padding:20px 18px;
+    border-radius:20px;
+    font-size:17px;line-height:1.5;font-weight:700;color:#fff;
+    margin:26px 0;
+    box-shadow:0 0 26px rgba(124,92,255,.35), inset 0 0 18px rgba(124,92,255,.12);
+    order:-1; /* плашка поднимается выше ссылок */
   }
   /* мини-эквалайзер = синтез речи */
-  .eq{display:flex;align-items:flex-end;gap:3px;height:18px;flex-shrink:0;margin-top:3px}
+  .eq{display:flex;align-items:flex-end;gap:4px;height:28px;flex-shrink:0}
   .eq span{
-    width:3px;border-radius:2px;
+    width:5px;border-radius:3px;
     background:linear-gradient(180deg,var(--accent2),var(--accent));
     animation:eq 1.2s ease-in-out infinite;
     transform-origin:bottom;
@@ -142,12 +148,143 @@
     .card{padding:32px 20px 22px}
     h1{font-size:22px}
   }
+
+  /* ═══════════ ФОН: галактика (galaxy.js) ═══════════ */
+  #space, #dust{
+    position:fixed;inset:0;width:100vw;height:100vh;
+    display:block;pointer-events:none;
+  }
+  #space{z-index:0}
+  #dust{z-index:1;mix-blend-mode:screen}
+  .screen{z-index:2}
+
+  /* ═══════════ ЭКРАН 2: сферы в цветах галактики ═══════════ */
+  .space{background:transparent}
+  /* галактика приглушается при наведении на сферу */
+  #space, #dust{transition:filter .4s}
+  body:has(.sphere:hover) #space, body:has(.sphere:hover) #dust{filter:brightness(.35) saturate(.5)}
+
+  .sphere{
+    position:absolute;
+    border-radius:50%;
+    cursor:pointer;
+    z-index:2;
+    transition:filter .3s, box-shadow .3s, scale .3s, opacity .35s;
+  }
+  .sphere:hover{
+    filter:brightness(1.35);
+    scale:1.15;
+    box-shadow:0 0 0 3px rgba(255,255,255,.3), 0 0 46px rgba(255,255,255,.55);
+  }
+  /* при наведении остальные тускнеют */
+  .space:has(.sphere:hover) .sphere:not(:hover){opacity:.22;filter:blur(1px)}
+
+  /* подпись при наведении */
+  .sphere::after{
+    content:attr(data-name);
+    position:absolute;top:calc(100% + 14px);left:50%;
+    transform:translateX(-50%);
+    font-size:14px;font-weight:700;white-space:nowrap;
+    color:#fff;text-shadow:0 0 12px #000;
+    opacity:0;transition:opacity .25s;pointer-events:none;
+  }
+  .sphere:hover::after{opacity:1}
+
+  /* цвета — прямо из палитры галактики */
+  .sp-1{ /* горячий розовый */
+    width:82px;height:82px;top:20%;left:16%;
+    background:radial-gradient(circle at 34% 30%, #ffd6f0, #ff52d1 55%, #8f1f68 88%);
+    box-shadow:inset -14px -18px 30px rgba(120,10,70,.5), 0 0 40px rgba(255,82,209,.5);
+    animation:drift1 14s ease-in-out infinite;
+  }
+  .sp-2{ /* фиолетовый */
+    width:104px;height:104px;top:28%;right:14%;
+    background:radial-gradient(circle at 34% 30%, #e8d4ff, #9e52ff 55%, #3d1d80 88%);
+    box-shadow:inset -18px -22px 36px rgba(50,15,110,.55), 0 0 46px rgba(158,82,255,.55);
+    animation:drift2 18s ease-in-out infinite;
+  }
+  .sp-3{ /* бирюзовый */
+    width:66px;height:66px;bottom:26%;left:24%;
+    background:radial-gradient(circle at 34% 30%, #d4f6ff, #40d9ff 55%, #0e5e80 88%);
+    box-shadow:inset -11px -14px 24px rgba(10,70,100,.55), 0 0 36px rgba(64,217,255,.55);
+    animation:drift3 12s ease-in-out infinite;
+  }
+  .sp-4{ /* голубой */
+    width:128px;height:128px;bottom:16%;right:20%;
+    background:radial-gradient(circle at 34% 30%, #e6eeff, #8cb3ff 55%, #2c4a8f 88%);
+    box-shadow:inset -22px -28px 44px rgba(30,50,110,.55), 0 0 52px rgba(140,179,255,.55);
+    animation:drift1 22s ease-in-out infinite reverse;
+  }
+  .sphere:hover{animation-play-state:paused}
+  @keyframes drift1{0%,100%{translate:0 0}50%{translate:16px -22px}}
+  @keyframes drift2{0%,100%{translate:0 0}50%{translate:-20px 16px}}
+  @keyframes drift3{0%,100%{translate:0 0}50%{translate:14px 18px}}
+
+  /* ═══════════ ЭКРАН 3: система планет на фоне галактики ═══════════ */
+  .earth-screen{background:transparent}
+  /* тёмная дымка позади системы — чтобы читалась на фоне галактики */
+  .earth-screen::before{
+    content:'';position:absolute;top:50%;left:50%;
+    width:min(180vmin,1900px);height:min(180vmin,1900px);
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle, rgba(3,1,10,.78) 0%, rgba(3,1,10,.45) 45%, transparent 72%);
+    pointer-events:none;z-index:0;
+  }
+  .star-link{z-index:3}
+  /* при наведении на планету галактика притушивается */
+  body.planet-hover #space, body.planet-hover #dust{filter:brightness(.35) saturate(.5)}
+
+  /* canvas с системой планет */
+  #system{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    z-index:1;
+    pointer-events:none;   /* клики проходят сквозь */
+  }
+  /* ссылки-планеты: невидимые круглые области, JS двигает их за планетами */
+  .p-link{
+    position:absolute;z-index:2;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    cursor:pointer;
+  }
+  .p-link::after{
+    content:attr(data-name);
+    position:absolute;top:calc(100% + 8px);left:50%;
+    transform:translateX(-50%);
+    font-size:13px;font-weight:700;white-space:nowrap;
+    color:#fff;text-shadow:0 0 12px #000;
+    opacity:0;transition:opacity .25s;pointer-events:none;
+  }
+  .p-link:hover::after{opacity:1}
+
+  /* звёзды-рикролы */
+  .star-link{
+    position:absolute;z-index:3;
+    width:7px;height:7px;border-radius:50%;background:#fff;
+    box-shadow:0 0 10px #fff, 0 0 22px rgba(160,180,255,.8);
+    animation:twinkle 3s ease-in-out infinite;
+    cursor:pointer!important;
+  }
+  @keyframes twinkle{0%,100%{opacity:.35}50%{opacity:1}}
+
+  /* ── стрелка «листай вниз» ── */
+  .down{
+    position:absolute;bottom:22px;left:50%;transform:translateX(-50%);
+    color:var(--muted);text-decoration:none;font-size:26px;line-height:1;
+    animation:bob 1.6s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
 </style>
 </head>
 <body>
 
-<div class="blob blob-1"></div>
-<div class="blob blob-2"></div>
+<!-- ═══════════ Фон: 3D-галактика (galaxy.js, от друга 🎁) ═══════════ -->
+<canvas id="space"></canvas>
+<canvas id="dust"></canvas>
+
+<!-- ═══════════ ЭКРАН 1: ссылки ═══════════ -->
+<section class="screen screen-top">
 
 <main class="card">
 
@@ -197,6 +334,233 @@
   <footer>© 2026 · сделано с ♥ · <a class="donate" href="https://donatex.gg/donate/krolik_nya" target="_blank" rel="noopener">поддержать материально</a> · <a class="donate" href="https://fetta.app/u/Krolik_nya" target="_blank" rel="noopener">сделать подарок</a></footer>
 
 </main>
+
+  <a class="down" href="#cosmos" title="листай вниз">↓</a>
+</section>
+
+<!-- ═══════════ ЭКРАН 2: сферы в цветах галактики ═══════════ -->
+<section class="screen space" id="cosmos">
+
+  <a class="sphere sp-1" href="https://t.me/krolik_nyVT"         target="_blank" rel="noopener" data-name="Telegram"></a>
+  <a class="sphere sp-2" href="https://www.twitch.tv/krolik_nya" target="_blank" rel="noopener" data-name="Twitch"></a>
+  <a class="sphere sp-3" href="https://github.com/Nanachi-meow"  target="_blank" rel="noopener" data-name="GitHub"></a>
+  <a class="sphere sp-4" href="https://t.me/krolik_nyVT?direct"  target="_blank" rel="noopener" data-name="Написать лично"></a>
+
+  <a class="down" href="#earth" title="листай вниз">↓</a>
+</section>
+
+<!-- ═══════════ ЭКРАН 3: система планет (canvas) ═══════════ -->
+<section class="screen earth-screen" id="earth">
+
+  <canvas id="system"></canvas>
+
+  <!-- невидимые ссылки, JS двигает их за планетами -->
+  <a class="p-link" id="pl-donat" href="https://donatex.gg/donate/krolik_nya" target="_blank" rel="noopener" data-name="Поддержать материально"></a>
+  <a class="p-link" id="pl-fetta" href="https://fetta.app/u/Krolik_nya" target="_blank" rel="noopener" data-name="Сделать подарок"></a>
+
+</section>
+
+<script>
+  const earth = document.getElementById('earth');
+
+  // 4 звезды-приколы: ведут на рикрол.
+  // Позиции зависят от текущего часа: в течение часа стоят на месте,
+  // каждый новый час переезжают (24 расстановки в сутки).
+  const hour = new Date().getHours();
+  // мини-ГПСЧ с сидом от часа
+  let seed = hour * 7919 + 13;
+  const rand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  // 4 сектора неба (верх-низ × лево-право) — по звезде в каждом
+  const zones = [[0, 0], [50, 0], [0, 50], [50, 50]];
+  zones.forEach(([zx, zy]) => {
+    const a = document.createElement('a');
+    a.className = 'star-link';
+    a.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.title = '✨';
+    a.style.top = (zy + 6 + rand() * 36) + '%';
+    a.style.left = (zx + 6 + rand() * 36) + '%';
+    a.style.animationDelay = (rand() * 3) + 's';
+    a.style.animationDuration = (2.5 + rand() * 2) + 's';
+    earth.appendChild(a);
+  });
+
+  // ═══ Система планет на canvas: настоящие шары, свет от звезды ═══
+  const sysC = document.getElementById('system');
+  const sysX = sysC.getContext('2d');
+  const PLANETS = [
+    { size: 32, dist: 0.34, speed: .055, phase: .6,  top:'#f0f0f0', mid:'#b8b8b8', bot:'#5a5a5a', glow:'220,220,220', link:null },
+    { size: 46, dist: 0.54, speed: .034, phase: 2.4,  top:'#ffd6f0', mid:'#ff52d1', bot:'#701a52', glow:'255,82,209',  link:'pl-donat' },
+    { size: 38, dist: 0.76, speed: .022, phase: 4.1,  top:'#d4f6ff', mid:'#40d9ff', bot:'#0c4a66', glow:'64,217,255',  link:'pl-fetta' },
+    { size: 62, dist: 1.00, speed: .014, phase: 5.3,  top:'#e8d4ff', mid:'#9e52ff', bot:'#301560', glow:'158,82,255',  link:null },
+  ];
+  PLANETS.forEach(p => { p.angle = p.phase; p.hover = false; p.hovT = 0; });
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let sysW = 0, sysH = 0;
+  function sysResize() {
+    const rect = earth.getBoundingClientRect();
+    sysW = rect.width; sysH = rect.height;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    sysC.width = sysW * dpr; sysC.height = sysH * dpr;
+    sysX.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  sysResize();
+  addEventListener('resize', sysResize);
+
+  // наведение: замирание + подсветка + притушение галактики
+  PLANETS.forEach(p => {
+    if (!p.link) return;
+    const a = document.getElementById(p.link);
+    a.addEventListener('mouseenter', () => { p.hover = true; document.body.classList.add('planet-hover'); });
+    a.addEventListener('mouseleave', () => { p.hover = false; document.body.classList.remove('planet-hover'); });
+  });
+
+  let sysLast = performance.now();
+  function drawSystem(now) {
+    requestAnimationFrame(drawSystem);
+    const dt = Math.min(64, now - sysLast) / 1000; sysLast = now;
+    if (!sysW) { sysResize(); return; }
+
+    const cx = sysW / 2, cy = sysH / 2;
+    const outer = Math.min(sysW, sysH) * .75;
+    const tilt = .62;   // сплюснутость орбит (наклон плоскости)
+    const pulse = .85 + .15 * Math.sin(now * .0013);
+
+    // планеты: позиция и плавный hover
+    const anyHover = PLANETS.some(p => p.hover);
+    PLANETS.forEach(p => {
+      if (!reduced && !p.hover) p.angle += p.speed * dt;
+      p.hovT += ((p.hover ? 1 : 0) - p.hovT) * Math.min(1, dt * 8);
+      p.x = cx + Math.cos(p.angle) * p.dist * outer;
+      p.y = cy + Math.sin(p.angle) * p.dist * outer * tilt;
+    });
+
+    sysX.clearRect(0, 0, sysW, sysH);
+
+    // орбиты
+    PLANETS.forEach(p => {
+      sysX.strokeStyle = 'rgba(255,255,255,' + (.1 * (anyHover ? .35 : 1)) + ')';
+      sysX.lineWidth = 1;
+      sysX.beginPath();
+      sysX.ellipse(cx, cy, p.dist * outer, p.dist * outer * tilt, 0, 0, Math.PI * 2);
+      sysX.stroke();
+    });
+
+    // свечение звезды (за планетами, мягкое — без лучей)
+    const starR = Math.min(sysW, sysH) * .09;
+    const glows = [[2.2, .5], [4.5, .22], [8, .1]];
+    glows.forEach(([k, a]) => {
+      const g = sysX.createRadialGradient(cx, cy, starR * .2, cx, cy, starR * k);
+      g.addColorStop(0, 'rgba(255,200,90,' + (a * pulse) + ')');
+      g.addColorStop(1, 'rgba(255,140,40,0)');
+      sysX.fillStyle = g;
+      sysX.beginPath(); sysX.arc(cx, cy, starR * k, 0, Math.PI * 2); sysX.fill();
+    });
+
+    // сортировка по глубине: планеты выше центра — за звездой
+    const order = [...PLANETS].sort((a, b) => a.y - b.y);
+    let starDrawn = false;
+    order.forEach(p => {
+      if (!starDrawn && p.y > cy) { drawStar(cx, cy, starR, anyHover); starDrawn = true; }
+      drawPlanet(p, cx, cy, anyHover);
+    });
+    if (!starDrawn) drawStar(cx, cy, starR, anyHover);
+
+    // двигаем невидимые ссылки за планетами
+    PLANETS.forEach(p => {
+      if (!p.link) return;
+      const a = document.getElementById(p.link);
+      const d = p.size * 2.4;   // область клика больше планеты
+      a.style.left = p.x + 'px';
+      a.style.top = p.y + 'px';
+      a.style.width = d + 'px';
+      a.style.height = d + 'px';
+    });
+  }
+
+  // звезда: жёлтый шар с градиентом, при hover планеты притушена
+  function drawStar(cx, cy, r, dim) {
+    const b = dim ? .6 : 1;
+    sysX.globalAlpha = b;
+    const g = sysX.createRadialGradient(cx - r * .28, cy - r * .3, r * .05, cx, cy, r);
+    g.addColorStop(0, '#fffce8');
+    g.addColorStop(.4, '#ffe45c');
+    g.addColorStop(.72, '#ffb62e');
+    g.addColorStop(1, '#ff7a1a');
+    sysX.fillStyle = g;
+    sysX.beginPath(); sysX.arc(cx, cy, r, 0, Math.PI * 2); sysX.fill();
+    sysX.globalAlpha = 1;
+  }
+
+  // планета: шар, светлая сторона всегда к звезде
+  function drawPlanet(p, cx, cy, anyHover) {
+    const others = anyHover && !p.hover;
+    const alpha = others ? .3 : 1;
+    const r = p.size * (1 + .18 * p.hovT);
+
+    // ореол при наведении
+    if (p.hovT > .02) {
+      const gl = sysX.createRadialGradient(p.x, p.y, r * .8, p.x, p.y, r * 2.4);
+      gl.addColorStop(0, 'rgba(' + p.glow + ',' + (.5 * p.hovT) + ')');
+      gl.addColorStop(1, 'rgba(' + p.glow + ',0)');
+      sysX.fillStyle = gl;
+      sysX.beginPath(); sysX.arc(p.x, p.y, r * 2.4, 0, Math.PI * 2); sysX.fill();
+    }
+
+    // тело планеты: градиент смещён в сторону звезды
+    let dx = cx - p.x, dy = cy - p.y;
+    const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+    sysX.globalAlpha = alpha;
+    const g = sysX.createRadialGradient(p.x + dx * r * .45, p.y + dy * r * .45, r * .12, p.x, p.y, r);
+    g.addColorStop(0, p.top);
+    g.addColorStop(.55, p.mid);
+    g.addColorStop(1, p.bot);
+    sysX.fillStyle = g;
+    sysX.beginPath(); sysX.arc(p.x, p.y, r, 0, Math.PI * 2); sysX.fill();
+
+    // кольцо-подсветка при наведении
+    if (p.hovT > .02) {
+      sysX.strokeStyle = 'rgba(255,255,255,' + (.55 * p.hovT) + ')';
+      sysX.lineWidth = 2;
+      sysX.beginPath(); sysX.arc(p.x, p.y, r + 4, 0, Math.PI * 2); sysX.stroke();
+    }
+    sysX.globalAlpha = 1;
+  }
+
+  requestAnimationFrame(drawSystem);
+  const card = document.querySelector('.card');
+  const spheres = document.querySelectorAll('.sphere');
+  const down = document.querySelector('.down');
+  function onScrollFX() {
+    const vh = innerHeight;
+    const p = Math.min(1, Math.max(0, scrollY / (vh * .85)));
+
+    // карточка уменьшается, размывается и растворяется — «отлетаем в космос»
+    card.style.transform = 'perspective(900px) scale(' + (1 - p * .35) + ') translateY(' + (-p * 60) + 'px)';
+    card.style.opacity = 1 - p * 1.15;
+    card.style.filter = 'blur(' + (p * 14) + 'px)';
+
+    // стрелка гаснет быстрее карточки
+    if (down) down.style.opacity = Math.max(0, 1 - p * 2.2);
+
+    // сферы второго экрана влетают снизу с лёгкой волной
+    spheres.forEach((s, i) => {
+      const q = Math.min(1, Math.max(0, (scrollY - vh * .35) / (vh * .55)));
+      const lag = q * 1.25 - i * .07;   // каждая следующая с запаздыванием
+      const e = Math.min(1, Math.max(0, lag));
+      const ease = 1 - Math.pow(1 - e, 3);
+      s.style.opacity = ease;
+      s.style.translate = 0 + ' ' + ((1 - ease) * 140) + 'px';
+      s.style.scale = (.7 + ease * .3);
+    });
+  }
+  addEventListener('scroll', onScrollFX, { passive: true });
+  addEventListener('resize', onScrollFX);
+  onScrollFX();
+</script>
+<script src="galaxy.js"></script>
 
 </body>
 </html>
