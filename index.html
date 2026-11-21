@@ -160,6 +160,11 @@
 
   /* ═══════════ ЭКРАН 2: сферы в цветах галактики ═══════════ */
   .space{background:transparent}
+  /* пустая дистанция между сферами и системой: только галактика */
+  .travel{
+    height:60vh;
+    pointer-events:none;
+  }
   /* галактика приглушается при наведении на сферу */
   #space, #dust{transition:filter .4s}
   body:has(.sphere:hover) #space, body:has(.sphere:hover) #dust{filter:brightness(.35) saturate(.5)}
@@ -220,30 +225,79 @@
   @keyframes drift2{0%,100%{translate:0 0}50%{translate:-20px 16px}}
   @keyframes drift3{0%,100%{translate:0 0}50%{translate:14px 18px}}
 
+  /* часы по центру (МСК+6) с перелистывающимися цифрами */
+  .clock{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    font-family:'Unbounded',sans-serif;
+    font-size:clamp(30px,8vw,48px);
+    font-weight:700;
+    color:#fff;
+    letter-spacing:.05em;
+    text-shadow:0 0 18px rgba(160,180,255,.55), 0 0 48px rgba(124,92,255,.45);
+    pointer-events:none;
+    z-index:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .clock-caption{
+    position:absolute;top:calc(50% + 58px);left:50%;
+    transform:translateX(-50%);
+    font-size:13px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+    color:rgba(232,222,255,.6);
+    text-shadow:0 0 10px #000;
+    pointer-events:none;
+    white-space:nowrap;
+    z-index:1;
+  }
+  /* каждая цифра — карточка; при смене старая улетает вверх, новая прилетает снизу */
+  .flip{
+    display:inline-block;
+    position:relative;
+    width:.72em;
+    height:1.28em;
+    overflow:hidden;
+    vertical-align:top;
+  }
+  .flip .roll{
+    position:absolute;left:0;top:0;
+    width:100%;height:200%;
+    display:flex;flex-direction:column;
+    align-items:center;
+    transition:transform .45s cubic-bezier(.3,.9,.35,1.1);
+  }
+  .flip .roll span{
+    height:50%;
+    display:flex;align-items:center;justify-content:center;
+    line-height:1;
+  }
+  .clock .sep{
+    display:inline-block;
+    width:.34em;
+    text-align:center;
+    animation:blink 2s steps(2) infinite;
+  }
+  @keyframes blink{50%{opacity:.25}}
+
   /* ═══════════ ЭКРАН 3: система планет на фоне галактики ═══════════ */
   .earth-screen{background:transparent}
-  /* тёмная дымка позади системы — чтобы читалась на фоне галактики */
-  .earth-screen::before{
-    content:'';position:absolute;top:50%;left:50%;
-    width:min(180vmin,1900px);height:min(180vmin,1900px);
-    transform:translate(-50%,-50%);
-    background:radial-gradient(circle, rgba(3,1,10,.78) 0%, rgba(3,1,10,.45) 45%, transparent 72%);
-    pointer-events:none;z-index:0;
-  }
+
   .star-link{z-index:3}
   /* при наведении на планету галактика притушивается */
   body.planet-hover #space, body.planet-hover #dust{filter:brightness(.35) saturate(.5)}
 
-  /* canvas с системой планет */
-  #system{
-    position:absolute;inset:0;
-    width:100%;height:100%;
-    z-index:1;
-    pointer-events:none;   /* клики проходят сквозь */
+  /* canvas систем ВНУТРИ секций: едут вместе со страницей.
+     Расширен запасом ~10% высоты вверх и вниз — свечения и орбиты
+     не обрезаются краями, даже если страница не докручена */
+  .sys-canvas{
+    position:absolute;
+    left:0;right:0;
+    top:-10%;bottom:-10%;
+    width:100%;height:120%;
+    pointer-events:none;
   }
-  /* ссылки-планеты: невидимые круглые области, JS двигает их за планетами */
+  /* ссылки-планеты: absolute внутри секции earth, после canvas в DOM */
   .p-link{
-    position:absolute;z-index:2;
+    position:absolute;
     border-radius:50%;
     transform:translate(-50%,-50%);
     cursor:pointer;
@@ -341,18 +395,29 @@
 <!-- ═══════════ ЭКРАН 2: сферы в цветах галактики ═══════════ -->
 <section class="screen space" id="cosmos">
 
+  <!-- мини-система: canvas В ПОТОКЕ секции, часы ниже по DOM -->
+  <canvas id="mini" class="sys-canvas"></canvas>
+
   <a class="sphere sp-1" href="https://t.me/krolik_nyVT"         target="_blank" rel="noopener" data-name="Telegram"></a>
   <a class="sphere sp-2" href="https://www.twitch.tv/krolik_nya" target="_blank" rel="noopener" data-name="Twitch"></a>
   <a class="sphere sp-3" href="https://github.com/Nanachi-meow"  target="_blank" rel="noopener" data-name="GitHub"></a>
   <a class="sphere sp-4" href="https://t.me/krolik_nyVT?direct"  target="_blank" rel="noopener" data-name="Написать лично"></a>
 
+  <div class="clock" id="clock">
+    <span class="flip"><span class="roll"><span>0</span><span>0</span></span></span><span class="flip"><span class="roll"><span>0</span><span>0</span></span></span><span class="sep">:</span><span class="flip"><span class="roll"><span>0</span><span>0</span></span></span><span class="flip"><span class="roll"><span>0</span><span>0</span></span></span><span class="sep">:</span><span class="flip"><span class="roll"><span>0</span><span>0</span></span></span><span class="flip"><span class="roll"><span>0</span><span>0</span></span></span>
+  </div>
+  <div class="clock-caption">актуальное время</div>
+
   <a class="down" href="#earth" title="листай вниз">↓</a>
 </section>
+
+<!-- ═══════════ дистанция: пустой космос, только галактика ═══════════ -->
+<div class="travel"></div>
 
 <!-- ═══════════ ЭКРАН 3: система планет (canvas) ═══════════ -->
 <section class="screen earth-screen" id="earth">
 
-  <canvas id="system"></canvas>
+  <canvas id="system" class="sys-canvas"></canvas>
 
   <!-- невидимые ссылки, JS двигает их за планетами -->
   <a class="p-link" id="pl-donat" href="https://donatex.gg/donate/krolik_nya" target="_blank" rel="noopener" data-name="Поддержать материально"></a>
@@ -386,153 +451,199 @@
     earth.appendChild(a);
   });
 
-  // ═══ Система планет на canvas: настоящие шары, свет от звезды ═══
-  const sysC = document.getElementById('system');
-  const sysX = sysC.getContext('2d');
-  const PLANETS = [
+  // ═══ Часы по центру второго экрана: МСК+6 (= UTC+9), flip-цифры ═══
+  // каждая цифра — карточка с «роликом»: при смене значения лента
+  // прокатывается, старая цифра улетает вверх, новая прилетает снизу
+  const clockEl = document.getElementById('clock');
+  const rolls = [...clockEl.querySelectorAll('.roll')];
+  function setRoll(roll, val) {
+    const cur = roll.children[1].textContent;
+    const next = String(val);
+    if (cur === next) return;
+    roll.children[1].textContent = next;          // нижняя (целевая)
+    roll.children[0].textContent = cur;           // верхняя (старая)
+    roll.style.transition = 'none';
+    roll.style.transform = 'translateY(0)';
+    void roll.offsetHeight;                       // reflow: сброс без анимации
+    roll.style.transition = '';
+    roll.style.transform = 'translateY(-50%)';    // плавный прокат
+  }
+  function tickClock() {
+    const t = new Date(Date.now() + 9 * 3600 * 1000);
+    const h = String(t.getUTCHours()).padStart(2, '0');
+    const m = String(t.getUTCMinutes()).padStart(2, '0');
+    const s = String(t.getUTCSeconds()).padStart(2, '0');
+    setRoll(rolls[0], h[0]); setRoll(rolls[1], h[1]);
+    setRoll(rolls[2], m[0]); setRoll(rolls[3], m[1]);
+    setRoll(rolls[4], s[0]); setRoll(rolls[5], s[1]);
+  }
+  // первичная установка без анимации
+  rolls.forEach(r => { r.style.transition = 'none'; });
+  tickClock();
+  rolls.forEach(r => { r.style.transform = 'translateY(-50%)'; void r.offsetHeight; r.style.transition = ''; });
+  setInterval(tickClock, 250);
+
+  // ═══ Две системы планет: мини (вокруг часов, экран 2) и большая (экран 3).
+  // Обе рисуются в canvas ВНУТРИ своих секций — едут вместе со страницей,
+  // никакой синхронизации со скроллом: прыгать и запаздывать нечему ═══
+  const PLANET_DEFS = [
     { size: 32, dist: 0.34, speed: .055, phase: .6,  top:'#f0f0f0', mid:'#b8b8b8', bot:'#5a5a5a', glow:'220,220,220', link:null },
-    { size: 46, dist: 0.54, speed: .034, phase: 2.4,  top:'#ffd6f0', mid:'#ff52d1', bot:'#701a52', glow:'255,82,209',  link:'pl-donat' },
-    { size: 38, dist: 0.76, speed: .022, phase: 4.1,  top:'#d4f6ff', mid:'#40d9ff', bot:'#0c4a66', glow:'64,217,255',  link:'pl-fetta' },
-    { size: 62, dist: 1.00, speed: .014, phase: 5.3,  top:'#e8d4ff', mid:'#9e52ff', bot:'#301560', glow:'158,82,255',  link:null },
+    { size: 46, dist: 0.54, speed: .034, phase: 2.4, top:'#ffd6f0', mid:'#ff52d1', bot:'#701a52', glow:'255,82,209', link:'pl-donat' },
+    { size: 38, dist: 0.76, speed: .022, phase: 4.1, top:'#d4f6ff', mid:'#40d9ff', bot:'#0c4a66', glow:'64,217,255', link:'pl-fetta' },
+    { size: 62, dist: 1.00, speed: .014, phase: 5.3, top:'#e8d4ff', mid:'#9e52ff', bot:'#301560', glow:'158,82,255', link:null },
   ];
-  PLANETS.forEach(p => { p.angle = p.phase; p.hover = false; p.hovT = 0; });
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  let sysW = 0, sysH = 0;
-  function sysResize() {
-    const rect = earth.getBoundingClientRect();
-    sysW = rect.width; sysH = rect.height;
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    sysC.width = sysW * dpr; sysC.height = sysH * dpr;
-    sysX.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  sysResize();
-  addEventListener('resize', sysResize);
-
-  // наведение: замирание + подсветка + притушение галактики
-  PLANETS.forEach(p => {
-    if (!p.link) return;
-    const a = document.getElementById(p.link);
-    a.addEventListener('mouseenter', () => { p.hover = true; document.body.classList.add('planet-hover'); });
-    a.addEventListener('mouseleave', () => { p.hover = false; document.body.classList.remove('planet-hover'); });
-  });
-
-  let sysLast = performance.now();
-  function drawSystem(now) {
-    requestAnimationFrame(drawSystem);
-    const dt = Math.min(64, now - sysLast) / 1000; sysLast = now;
-    if (!sysW) { sysResize(); return; }
-
-    const cx = sysW / 2, cy = sysH / 2;
-    const outer = Math.min(sysW, sysH) * .75;
-    const tilt = .62;   // сплюснутость орбит (наклон плоскости)
-    const pulse = .85 + .15 * Math.sin(now * .0013);
-
-    // планеты: позиция и плавный hover
-    const anyHover = PLANETS.some(p => p.hover);
-    PLANETS.forEach(p => {
-      if (!reduced && !p.hover) p.angle += p.speed * dt;
-      p.hovT += ((p.hover ? 1 : 0) - p.hovT) * Math.min(1, dt * 8);
-      p.x = cx + Math.cos(p.angle) * p.dist * outer;
-      p.y = cy + Math.sin(p.angle) * p.dist * outer * tilt;
-    });
-
-    sysX.clearRect(0, 0, sysW, sysH);
-
-    // орбиты
-    PLANETS.forEach(p => {
-      sysX.strokeStyle = 'rgba(255,255,255,' + (.1 * (anyHover ? .35 : 1)) + ')';
-      sysX.lineWidth = 1;
-      sysX.beginPath();
-      sysX.ellipse(cx, cy, p.dist * outer, p.dist * outer * tilt, 0, 0, Math.PI * 2);
-      sysX.stroke();
-    });
-
-    // свечение звезды (за планетами, мягкое — без лучей)
-    const starR = Math.min(sysW, sysH) * .09;
-    const glows = [[2.2, .5], [4.5, .22], [8, .1]];
-    glows.forEach(([k, a]) => {
-      const g = sysX.createRadialGradient(cx, cy, starR * .2, cx, cy, starR * k);
-      g.addColorStop(0, 'rgba(255,200,90,' + (a * pulse) + ')');
-      g.addColorStop(1, 'rgba(255,140,40,0)');
-      sysX.fillStyle = g;
-      sysX.beginPath(); sysX.arc(cx, cy, starR * k, 0, Math.PI * 2); sysX.fill();
-    });
-
-    // сортировка по глубине: планеты выше центра — за звездой
-    const order = [...PLANETS].sort((a, b) => a.y - b.y);
-    let starDrawn = false;
-    order.forEach(p => {
-      if (!starDrawn && p.y > cy) { drawStar(cx, cy, starR, anyHover); starDrawn = true; }
-      drawPlanet(p, cx, cy, anyHover);
-    });
-    if (!starDrawn) drawStar(cx, cy, starR, anyHover);
-
-    // двигаем невидимые ссылки за планетами
-    PLANETS.forEach(p => {
-      if (!p.link) return;
-      const a = document.getElementById(p.link);
-      const d = p.size * 2.4;   // область клика больше планеты
-      a.style.left = p.x + 'px';
-      a.style.top = p.y + 'px';
-      a.style.width = d + 'px';
-      a.style.height = d + 'px';
-    });
+  function drawStar(ctx, cx, cy, r, dim, base) {
+    ctx.globalAlpha = base * (dim ? .6 : 1);
+    const g = ctx.createRadialGradient(cx - r * .28, cy - r * .3, r * .05, cx, cy, r);
+    g.addColorStop(0, '#fffce8'); g.addColorStop(.4, '#ffe45c');
+    g.addColorStop(.72, '#ffb62e'); g.addColorStop(1, '#ff7a1a');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = base;
   }
 
-  // звезда: жёлтый шар с градиентом, при hover планеты притушена
-  function drawStar(cx, cy, r, dim) {
-    const b = dim ? .6 : 1;
-    sysX.globalAlpha = b;
-    const g = sysX.createRadialGradient(cx - r * .28, cy - r * .3, r * .05, cx, cy, r);
-    g.addColorStop(0, '#fffce8');
-    g.addColorStop(.4, '#ffe45c');
-    g.addColorStop(.72, '#ffb62e');
-    g.addColorStop(1, '#ff7a1a');
-    sysX.fillStyle = g;
-    sysX.beginPath(); sysX.arc(cx, cy, r, 0, Math.PI * 2); sysX.fill();
-    sysX.globalAlpha = 1;
-  }
-
-  // планета: шар, светлая сторона всегда к звезде
-  function drawPlanet(p, cx, cy, anyHover) {
+  function drawPlanet(ctx, p, cx, cy, anyHover, base, unit) {
     const others = anyHover && !p.hover;
-    const alpha = others ? .3 : 1;
-    const r = p.size * (1 + .18 * p.hovT);
-
-    // ореол при наведении
+    const alpha = base * (others ? .3 : 1);
+    const r = Math.max(2, p.size * unit * (1 + .18 * p.hovT));
     if (p.hovT > .02) {
-      const gl = sysX.createRadialGradient(p.x, p.y, r * .8, p.x, p.y, r * 2.4);
+      const gl = ctx.createRadialGradient(p.x, p.y, r * .8, p.x, p.y, r * 2.4);
       gl.addColorStop(0, 'rgba(' + p.glow + ',' + (.5 * p.hovT) + ')');
       gl.addColorStop(1, 'rgba(' + p.glow + ',0)');
-      sysX.fillStyle = gl;
-      sysX.beginPath(); sysX.arc(p.x, p.y, r * 2.4, 0, Math.PI * 2); sysX.fill();
+      ctx.fillStyle = gl;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r * 2.4, 0, Math.PI * 2); ctx.fill();
     }
-
-    // тело планеты: градиент смещён в сторону звезды
     let dx = cx - p.x, dy = cy - p.y;
     const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
-    sysX.globalAlpha = alpha;
-    const g = sysX.createRadialGradient(p.x + dx * r * .45, p.y + dy * r * .45, r * .12, p.x, p.y, r);
-    g.addColorStop(0, p.top);
-    g.addColorStop(.55, p.mid);
-    g.addColorStop(1, p.bot);
-    sysX.fillStyle = g;
-    sysX.beginPath(); sysX.arc(p.x, p.y, r, 0, Math.PI * 2); sysX.fill();
-
-    // кольцо-подсветка при наведении
+    ctx.globalAlpha = alpha;
+    const g = ctx.createRadialGradient(p.x + dx * r * .45, p.y + dy * r * .45, r * .12, p.x, p.y, r);
+    g.addColorStop(0, p.top); g.addColorStop(.55, p.mid); g.addColorStop(1, p.bot);
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
     if (p.hovT > .02) {
-      sysX.strokeStyle = 'rgba(255,255,255,' + (.55 * p.hovT) + ')';
-      sysX.lineWidth = 2;
-      sysX.beginPath(); sysX.arc(p.x, p.y, r + 4, 0, Math.PI * 2); sysX.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,' + (.55 * p.hovT) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r + 4, 0, Math.PI * 2); ctx.stroke();
     }
-    sysX.globalAlpha = 1;
+    ctx.globalAlpha = base;
   }
 
-  requestAnimationFrame(drawSystem);
+  function makeSystem(canvas, stateFn, cxRatio, withLinks) {
+    const ctx = canvas.getContext('2d');
+    const planets = PLANET_DEFS.map(d => Object.assign({}, d, {
+      angle: d.phase, hover: false, hovT: 0,
+      el: (withLinks && d.link) ? document.getElementById(d.link) : null
+    }));
+    planets.forEach(p => {
+      if (!p.el) return;
+      p.el.addEventListener('mouseenter', () => { p.hover = true; document.body.classList.add('planet-hover'); });
+      p.el.addEventListener('mouseleave', () => { p.hover = false; document.body.classList.remove('planet-hover'); });
+    });
+    let W = 0, H = 0, PAD = 0;
+    function resize() {
+      const r = canvas.parentElement.getBoundingClientRect();
+      W = r.width; H = r.height;
+      PAD = Math.round(H * .1);   // согласовано с CSS: top:-10%, height:120%
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round((H + PAD * 2) * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    addEventListener('resize', resize);
+
+    let last = performance.now();
+    function frame(now) {
+      requestAnimationFrame(frame);
+      const dt = Math.min(64, now - last) / 1000; last = now;
+      if (!W) { resize(); return; }
+      const st = stateFn();
+      if (st.alpha <= 0.01) { ctx.clearRect(0, 0, W, H + PAD * 2); return; }
+
+      // центр системы = центр секции (canvas расширен запасом PAD сверху)
+      const cx = W * cxRatio, cy = PAD + H / 2;
+      const outer = Math.min(W * .8, H * 1.05) * st.scale;
+      const tilt = .62;
+      const pulse = .85 + .15 * Math.sin(now * .0013);
+
+      const anyHover = planets.some(p => p.hover);
+      planets.forEach(p => {
+        if (!reduced && !p.hover) p.angle += p.speed * dt;
+        p.hovT += ((p.hover ? 1 : 0) - p.hovT) * Math.min(1, dt * 8);
+        p.x = cx + Math.cos(p.angle) * p.dist * outer;
+        p.y = cy + Math.sin(p.angle) * p.dist * outer * tilt;
+      });
+
+      ctx.clearRect(0, 0, W, H + PAD * 2);
+      ctx.globalAlpha = st.alpha;
+
+      // орбиты
+      planets.forEach(p => {
+        ctx.strokeStyle = 'rgba(255,255,255,' + (.1 * (anyHover ? .35 : 1)) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, p.dist * outer, p.dist * outer * tilt, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      // свечение звезды
+      const starR = Math.min(W, H) * .09 * st.scale;
+      const glowR = Math.max(starR, 14);
+      [[2.2, .5], [4.5, .22], [8, .1]].forEach(([k, a]) => {
+        const g = ctx.createRadialGradient(cx, cy, glowR * .2, cx, cy, glowR * k);
+        g.addColorStop(0, 'rgba(255,200,90,' + (a * pulse) + ')');
+        g.addColorStop(1, 'rgba(255,140,40,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, glowR * k, 0, Math.PI * 2); ctx.fill();
+      });
+
+      // планеты, уходящие вверх орбиты, прячутся за звездой
+      const order = [...planets].sort((a, b) => a.y - b.y);
+      let starDrawn = false;
+      order.forEach(p => {
+        if (!starDrawn && p.y > cy) { drawStar(ctx, cx, cy, starR, anyHover, st.alpha); starDrawn = true; }
+        drawPlanet(ctx, p, cx, cy, anyHover, st.alpha, st.scale);
+      });
+      if (!starDrawn) drawStar(ctx, cx, cy, starR, anyHover, st.alpha);
+
+      // ссылки-планеты двигаются за планетами (в координатах секции:
+      // canvas сдвинут на -PAD, компенсируем)
+      planets.forEach(p => {
+        if (!p.el) return;
+        const d = Math.max(10, p.size * 2.4 * st.scale);
+        p.el.style.left = p.x + 'px';
+        p.el.style.top = (p.y - PAD) + 'px';
+        p.el.style.width = d + 'px';
+        p.el.style.height = d + 'px';
+        p.el.style.pointerEvents = (st.scale > .7) ? 'auto' : 'none';
+      });
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // мини-система: живёт в потоке экрана 2, вокруг часов (цифры поверх), не кликабельна
+  makeSystem(document.getElementById('mini'), () => ({ scale: .16, alpha: 1 }), .5, false);
+
+  // большая система: появляется с входом экрана 3 в кадр и растёт до конца страницы
+  const earthSec = document.getElementById('earth');
+  let earthTop = 0;
+  function measureEarth() { earthTop = earthSec.getBoundingClientRect().top + scrollY; }
+  measureEarth();
+  addEventListener('resize', measureEarth);
+  makeSystem(document.getElementById('system'), () => {
+    const vh = innerHeight;
+    // старт: экран 3 полностью вошёл в кадр; финиш: конец страницы
+    const p = Math.min(1, Math.max(0, (scrollY - (earthTop - vh)) / (vh * 1.0)));
+    const g = p * p;                     // разгон: медленно → резко
+    return { scale: .12 + .88 * g, alpha: Math.min(1, p * 2) };
+  }, .36, true);
+
   const card = document.querySelector('.card');
   const spheres = document.querySelectorAll('.sphere');
   const down = document.querySelector('.down');
+  // сферам запрещаем влетать, пока не пройдена половина второго экрана
   function onScrollFX() {
     const vh = innerHeight;
     const p = Math.min(1, Math.max(0, scrollY / (vh * .85)));
@@ -545,10 +656,10 @@
     // стрелка гаснет быстрее карточки
     if (down) down.style.opacity = Math.max(0, 1 - p * 2.2);
 
-    // сферы второго экрана влетают снизу с лёгкой волной
+    // сферы влетают, когда первый экран почти пройден
     spheres.forEach((s, i) => {
-      const q = Math.min(1, Math.max(0, (scrollY - vh * .35) / (vh * .55)));
-      const lag = q * 1.25 - i * .07;   // каждая следующая с запаздыванием
+      const q = Math.min(1, Math.max(0, (scrollY - vh * .3) / (vh * .5)));
+      const lag = q * 1.25 - i * .07;
       const e = Math.min(1, Math.max(0, lag));
       const ease = 1 - Math.pow(1 - e, 3);
       s.style.opacity = ease;
