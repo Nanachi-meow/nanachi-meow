@@ -286,13 +286,12 @@
   body.planet-hover #space, body.planet-hover #dust{filter:brightness(.35) saturate(.5)}
 
   /* canvas систем ВНУТРИ секций: едут вместе со страницей.
-     Расширен запасом ~10% высоты вверх и вниз — свечения и орбиты
-     не обрезаются краями, даже если страница не докручена */
+     Геометрию (top/height) задаёт JS под фактический запас свечения;
+     здесь только позиционирование и запрет кликов */
   .sys-canvas{
     position:absolute;
-    left:0;right:0;
-    top:-10%;bottom:-10%;
-    width:100%;height:120%;
+    left:0;right:0;top:0;
+    width:100%;
     pointer-events:none;
   }
   /* ссылки-планеты: absolute внутри секции earth, после canvas в DOM */
@@ -302,6 +301,34 @@
     transform:translate(-50%,-50%);
     cursor:pointer;
   }
+  .p-link.sat{cursor:pointer}
+
+  /* зона солнца: невидимый круг по размеру светила — «педаль газа» */
+  .sun-zone{
+    position:absolute;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    cursor:pointer;
+    z-index:3;
+    title:'разогнать планеты';
+  }
+  /* иконка-бейдж на спутнике */
+  .p-link.sat::before{
+    content:'';
+    position:absolute;inset:0;
+    border-radius:50%;
+    background:var(--sat-icon) center/62% no-repeat;
+    filter:drop-shadow(0 1px 3px rgba(0,0,0,.7));
+    transition:transform .2s;
+  }
+  .p-link.sat:hover::before{transform:scale(1.18)}
+  /* иконки: монета и подарок — эмодзи, соцсети — фирменные логотипы */
+  #sat-1-1{--sat-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%99%3C/text%3E%3C/svg%3E")}
+  #sat-1-2{--sat-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%81%3C/text%3E%3C/svg%3E")}
+  #sat-2-1{--sat-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2340a8ff'%3E%3Cpath d='M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.26-1.91.178-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.533 6.998-3.028 3.332-1.386 4.025-1.627 4.476-1.635z'/%3E%3C/svg%3E")}
+  #sat-2-2{--sat-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a970ff'%3E%3Cpath d='M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0 1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143-3.428 3.429h-3.429l-3 3v-3H6.857V1.714h13.714z'/%3E%3C/svg%3E")}
+  #sat-3-1{--sat-icon:none}
+  #sat-3-2{--sat-icon:none}
   .p-link::after{
     content:attr(data-name);
     position:absolute;top:calc(100% + 8px);left:50%;
@@ -311,6 +338,29 @@
     opacity:0;transition:opacity .25s;pointer-events:none;
   }
   .p-link:hover::after{opacity:1}
+
+  /* кнопка возврата из зума планеты к системе */
+  .back-btn{
+    position:absolute;left:50%;bottom:7%;
+    transform:translateX(-50%);
+    z-index:4;
+    padding:12px 22px;
+    background:rgba(10,8,24,.55);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:999px;
+    color:#eef1f7;
+    font:700 14px/1 'Manrope',sans-serif;
+    letter-spacing:.03em;
+    cursor:pointer;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    opacity:0;pointer-events:none;
+    transition:border-color .25s, background .25s;
+  }
+  .back-btn:hover{
+    border-color:rgba(124,92,255,.65);
+    background:rgba(124,92,255,.18);
+  }
 
   /* звёзды-рикролы */
   .star-link{
@@ -419,9 +469,20 @@
 
   <canvas id="system" class="sys-canvas"></canvas>
 
-  <!-- невидимые ссылки, JS двигает их за планетами -->
-  <a class="p-link" id="pl-donat" href="https://donatex.gg/donate/krolik_nya" target="_blank" rel="noopener" data-name="Поддержать материально"></a>
-  <a class="p-link" id="pl-fetta" href="https://fetta.app/u/Krolik_nya" target="_blank" rel="noopener" data-name="Сделать подарок"></a>
+  <!-- кликабельные планеты-разделы (клик = зум к планете) -->
+  <div class="p-link" id="pl-1" data-name="Поддержка"></div>
+  <div class="p-link" id="pl-2" data-name="Соц сети"></div>
+  <div class="p-link" id="pl-3" data-name="Мои проекты"></div>
+
+  <!-- спутники-ссылки: появляются вокруг выбранной планеты -->
+  <a class="p-link sat" id="sat-1-1" href="https://donatex.gg/donate/krolik_nya" target="_blank" rel="noopener" data-name="донаты"></a>
+  <a class="p-link sat" id="sat-1-2" href="https://fetta.app/u/Krolik_nya" target="_blank" rel="noopener" data-name="сделать подарок"></a>
+  <a class="p-link sat" id="sat-2-1" href="https://t.me/krolik_nyVT" target="_blank" rel="noopener" data-name="Telegram"></a>
+  <a class="p-link sat" id="sat-2-2" href="https://www.twitch.tv/krolik_nya" target="_blank" rel="noopener" data-name="Twitch"></a>
+  <a class="p-link sat" id="sat-3-1" href="https://github.com/Nanachi-meow/local-and-server-twitch-bot" target="_blank" rel="noopener" data-name="Twitch-бот"></a>
+  <a class="p-link sat" id="sat-3-2" href="https://github.com/Nanachi-meow/Minecraft-Chat-TTS-Bard-Mod" target="_blank" rel="noopener" data-name="Minecraft TTS мод"></a>
+
+  <button class="back-btn" id="back-btn" type="button">← назад к системе</button>
 
 </section>
 
@@ -488,9 +549,18 @@
   // никакой синхронизации со скроллом: прыгать и запаздывать нечему ═══
   const PLANET_DEFS = [
     { size: 32, dist: 0.34, speed: .055, phase: .6,  top:'#f0f0f0', mid:'#b8b8b8', bot:'#5a5a5a', glow:'220,220,220', link:null },
-    { size: 46, dist: 0.54, speed: .034, phase: 2.4, top:'#ffd6f0', mid:'#ff52d1', bot:'#701a52', glow:'255,82,209', link:'pl-donat' },
-    { size: 38, dist: 0.76, speed: .022, phase: 4.1, top:'#d4f6ff', mid:'#40d9ff', bot:'#0c4a66', glow:'64,217,255', link:'pl-fetta' },
-    { size: 62, dist: 1.00, speed: .014, phase: 5.3, top:'#e8d4ff', mid:'#9e52ff', bot:'#301560', glow:'158,82,255', link:null },
+    { size: 46, dist: 0.54, speed: .034, phase: 2.4, top:'#ffd6f0', mid:'#ff52d1', bot:'#701a52', glow:'255,82,209', link:'pl-1', name:'Поддержка' },
+    { size: 38, dist: 0.76, speed: .022, phase: 4.1, top:'#d4f6ff', mid:'#40d9ff', bot:'#0c4a66', glow:'64,217,255', link:'pl-2', name:'Соц сети' },
+    { size: 62, dist: 1.00, speed: .014, phase: 5.3, top:'#e8d4ff', mid:'#9e52ff', bot:'#301560', glow:'158,82,255', link:'pl-3', name:'Мои проекты' },
+  ];
+  // спутники выбранной планеты: 2 на каждый раздел, летают вокруг неё
+  const SAT_DEFS = [
+    { planet: 1, size: 16, dist: 1.0, speed: .30, phase: .9,  top:'#ffe9f5', mid:'#ff7bd2', bot:'#8f1f68', glow:'255,82,209', el:'sat-1-1' },
+    { planet: 1, size: 13, dist: 1.65, speed: .18, phase: 3.9, top:'#f2fbff', mid:'#7be4ff', bot:'#0e5e80', glow:'64,217,255', el:'sat-1-2' },
+    { planet: 2, size: 15, dist: 1.0, speed: .30, phase: .9,  top:'#e2f4ff', mid:'#4aa8ff', bot:'#1b3a6e', glow:'90,160,255', el:'sat-2-1' },
+    { planet: 2, size: 12, dist: 1.65, speed: .18, phase: 3.9, top:'#ffe2d6', mid:'#ff9e52', bot:'#6e3410', glow:'255,150,80', el:'sat-2-2' },
+    { planet: 3, size: 15, dist: 1.0, speed: .30, phase: .9,  top:'#e8f0ff', mid:'#8cb3ff', bot:'#2c4a8f', glow:'140,179,255', el:'sat-3-1' },
+    { planet: 3, size: 12, dist: 1.65, speed: .18, phase: 3.9, top:'#dffff2', mid:'#4dff9e', bot:'#0e5e3a', glow:'80,255,158', el:'sat-3-2' },
   ];
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -541,14 +611,59 @@
       p.el.addEventListener('mouseenter', () => { p.hover = true; document.body.classList.add('planet-hover'); });
       p.el.addEventListener('mouseleave', () => { p.hover = false; document.body.classList.remove('planet-hover'); });
     });
+
+    // спутники + зум + солнце-акселератор (только у большой системы)
+    let moons = [], satEls = [], focus = null, lastFocus = null, fT = 0;
+    let backBtn = null, sunEl = null, sunHeld = false, boost = 0;
+    if (withLinks) {
+      moons = SAT_DEFS.map(m => Object.assign({}, m, {
+        angle: m.phase, hover: false, hovT: 0,
+        el: document.getElementById(m.el)
+      }));
+      moons.forEach(m => {
+        if (!m.el) return;
+        m.el.addEventListener('mouseenter', () => { m.hover = true; document.body.classList.add('planet-hover'); });
+        m.el.addEventListener('mouseleave', () => { m.hover = false; document.body.classList.remove('planet-hover'); });
+      });
+      planets.forEach((p, i) => {
+        if (!p.el) return;
+        p.el.addEventListener('click', () => {
+          if (!p.name) return;
+          if (focus === i) { focus = null; return; }  // клик по раскрытой = назад
+          p.hover = false;
+          focus = i;
+        });
+      });
+      // клик по уже раскрытой планете в зуме = назад к системе
+      // (зона планеты в зуме остаётся активной и следит за планетой)
+      satEls = moons.map(m => m.el);
+      backBtn = document.getElementById('back-btn');
+      if (backBtn) backBtn.addEventListener('click', () => { focus = null; });
+      // солнце: зажатие ускоряет вращение планет
+      sunEl = document.createElement('div');
+      sunEl.className = 'sun-zone';
+      canvas.parentElement.appendChild(sunEl);
+      const sunDown = () => { sunHeld = true; };
+      const sunUp = () => { sunHeld = false; };
+      sunEl.addEventListener('mousedown', sunDown);
+      sunEl.addEventListener('mouseup', sunUp);
+      sunEl.addEventListener('mouseleave', sunUp);
+      sunEl.addEventListener('touchstart', sunDown, { passive: true });
+      sunEl.addEventListener('touchend', sunUp, { passive: true });
+    }
+
     let W = 0, H = 0, PAD = 0;
+    const tilt = .62;   // сплюснутость орбит — общая для всех рендеров
     function resize() {
       const r = canvas.parentElement.getBoundingClientRect();
       W = r.width; H = r.height;
-      PAD = Math.round(H * .1);   // согласовано с CSS: top:-10%, height:120%
+      PAD = Math.round(Math.max(H * .18, 110));   // запас против обрезки свечения
       const dpr = Math.min(devicePixelRatio || 1, 2);
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round((H + PAD * 2) * dpr);
+      // видимая геометрия: canvas смещён вверх на PAD и выше секции на PAD
+      canvas.style.top = (-PAD) + 'px';
+      canvas.style.height = (H + PAD * 2) + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     resize();
@@ -560,23 +675,51 @@
       const dt = Math.min(64, now - last) / 1000; last = now;
       if (!W) { resize(); return; }
       const st = stateFn();
-      if (st.alpha <= 0.01) { ctx.clearRect(0, 0, W, H + PAD * 2); return; }
+      if (st.alpha <= 0.01) {
+        ctx.clearRect(0, 0, W, H + PAD * 2);
+        if (backBtn) { backBtn.style.opacity = 0; backBtn.style.pointerEvents = 'none'; }
+        return;
+      }
 
       // центр системы = центр секции (canvas расширен запасом PAD сверху)
       const cx = W * cxRatio, cy = PAD + H / 2;
       const outer = Math.min(W * .8, H * 1.05) * st.scale;
-      const tilt = .62;
       const pulse = .85 + .15 * Math.sin(now * .0013);
 
-      const anyHover = planets.some(p => p.hover);
+      // сглаживание зума
+      if (focus !== null) lastFocus = focus;
+      fT += (((focus !== null) ? 1 : 0) - fT) * Math.min(1, dt * 4.5);
+      if (fT < .002 && focus === null) fT = 0;
+      const fi = (focus !== null) ? focus : lastFocus;
+      const zoomed = withLinks && fi !== null && fT > .01;
+
+      const anyHover = planets.some(p => p.hover) || moons.some(m => m.hover);
+      // солнце зажато — планеты разгоняются (плавно), отпущено — плавно тормозят
+      const targetBoost = (sunHeld && !zoomed) ? 30 : 0;
+      boost += (targetBoost - boost) * Math.min(1, dt * 5);
       planets.forEach(p => {
-        if (!reduced && !p.hover) p.angle += p.speed * dt;
+        if (!reduced && !p.hover) p.angle += p.speed * (1 + boost) * dt;
         p.hovT += ((p.hover ? 1 : 0) - p.hovT) * Math.min(1, dt * 8);
         p.x = cx + Math.cos(p.angle) * p.dist * outer;
         p.y = cy + Math.sin(p.angle) * p.dist * outer * tilt;
       });
 
       ctx.clearRect(0, 0, W, H + PAD * 2);
+
+      if (zoomed) {
+        renderZoom(st, fi, now, dt, cx, cy, pulse, anyHover);
+      } else {
+        renderNormal(st, cx, cy, pulse, anyHover);
+      }
+
+      // кнопка «назад»
+      if (backBtn) {
+        backBtn.style.opacity = fT;
+        backBtn.style.pointerEvents = (fT > .5 && focus !== null) ? 'auto' : 'none';
+      }
+    }
+
+    function renderNormal(st, cx, cy, pulse, anyHover) {
       ctx.globalAlpha = st.alpha;
 
       // орбиты
@@ -584,22 +727,14 @@
         ctx.strokeStyle = 'rgba(255,255,255,' + (.1 * (anyHover ? .35 : 1)) + ')';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.ellipse(cx, cy, p.dist * outer, p.dist * outer * tilt, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, p.dist * outerOf(st), p.dist * outerOf(st) * tilt, 0, 0, Math.PI * 2);
         ctx.stroke();
       });
 
-      // свечение звезды
       const starR = Math.min(W, H) * .09 * st.scale;
       const glowR = Math.max(starR, 14);
-      [[2.2, .5], [4.5, .22], [8, .1]].forEach(([k, a]) => {
-        const g = ctx.createRadialGradient(cx, cy, glowR * .2, cx, cy, glowR * k);
-        g.addColorStop(0, 'rgba(255,200,90,' + (a * pulse) + ')');
-        g.addColorStop(1, 'rgba(255,140,40,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(cx, cy, glowR * k, 0, Math.PI * 2); ctx.fill();
-      });
+      drawStarGlow(cx, cy, glowR, pulse, st.alpha);
 
-      // планеты, уходящие вверх орбиты, прячутся за звездой
       const order = [...planets].sort((a, b) => a.y - b.y);
       let starDrawn = false;
       order.forEach(p => {
@@ -608,8 +743,17 @@
       });
       if (!starDrawn) drawStar(ctx, cx, cy, starR, anyHover, st.alpha);
 
-      // ссылки-планеты двигаются за планетами (в координатах секции:
-      // canvas сдвинут на -PAD, компенсируем)
+      // зона солнца следует за звездой; при зуме отключается
+      if (sunEl) {
+        const d = starR * 1.8;
+        sunEl.style.left = cx + 'px';
+        sunEl.style.top = (cy - PAD) + 'px';
+        sunEl.style.width = d + 'px';
+        sunEl.style.height = d + 'px';
+        sunEl.style.pointerEvents = (st.alpha > .6) ? 'auto' : 'none';
+      }
+
+      // ссылки-планеты двигаются за планетами
       planets.forEach(p => {
         if (!p.el) return;
         const d = Math.max(10, p.size * 2.4 * st.scale);
@@ -619,7 +763,174 @@
         p.el.style.height = d + 'px';
         p.el.style.pointerEvents = (st.scale > .7) ? 'auto' : 'none';
       });
+      // спутники полностью скрыты и унесены за экран
+      satEls.forEach(el => {
+        if (!el) return;
+        el.style.pointerEvents = 'none';
+        el.style.left = '-9999px';
+        el.style.top = '0px';
+      });
     }
+
+    function renderZoom(st, fi, now, dt, cx, cy, pulse, anyHover) {
+      const fp = planets[fi];
+      const e = fT;
+      const sysA = st.alpha * (1 - .9 * e);    // система тускнеет
+      const sysK = 1 - .5 * e;                // и отъезжает (сжимается к центру)
+
+      // планета летит с орбиты в центр экрана и растёт
+      const hx = fp.x, hy = fp.y;
+      const homeR = Math.max(2, fp.size * st.scale);
+      const tx = W * .5, ty = PAD + H / 2;
+      const bigR = Math.min(W, H) * .17;
+      const zx = hx + (tx - hx) * e;
+      const zy = hy + (ty - hy) * e;
+      const zr = homeR + (bigR - homeR) * e;
+
+      // отдалённая система (без выбранной планеты)
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(sysK, sysK);
+      ctx.translate(-cx, -cy);
+      ctx.globalAlpha = sysA;
+
+      const outer = outerOf(st);
+      planets.forEach(p => {
+        if (p === fp) return;
+        ctx.strokeStyle = 'rgba(255,255,255,.07)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, p.dist * outer, p.dist * outer * tilt, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      const starR = Math.min(W, H) * .09 * st.scale;
+      const glowR = Math.max(starR, 14);
+      drawStarGlow(cx, cy, glowR, pulse, sysA);
+
+      const order = [...planets].filter(p => p !== fp).sort((a, b) => a.y - b.y);
+      let starDrawn = false;
+      order.forEach(p => {
+        if (!starDrawn && p.y > cy) { drawStar(ctx, cx, cy, starR, false, sysA); starDrawn = true; }
+        drawPlanet(ctx, p, cx, cy, false, sysA, st.scale);
+      });
+      if (!starDrawn) drawStar(ctx, cx, cy, starR, false, sysA);
+      ctx.restore();
+
+      // ореол вокруг выбранной планеты
+      ctx.globalAlpha = st.alpha * e;
+      const halo = ctx.createRadialGradient(zx, zy, zr * .9, zx, zy, zr * 2.2);
+      halo.addColorStop(0, 'rgba(' + fp.glow + ',.4)');
+      halo.addColorStop(1, 'rgba(' + fp.glow + ',0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(zx, zy, zr * 2.2, 0, Math.PI * 2); ctx.fill();
+
+      // сама планета — крупный шар, свет сверху-слева
+      ctx.globalAlpha = st.alpha;
+      const g = ctx.createRadialGradient(zx - zr * .35, zy - zr * .4, zr * .08, zx, zy, zr);
+      g.addColorStop(0, fp.top); g.addColorStop(.55, fp.mid); g.addColorStop(1, fp.bot);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(zx, zy, zr, 0, Math.PI * 2); ctx.fill();
+
+      // подпись раздела над планетой
+      if (fp.name) {
+        ctx.globalAlpha = st.alpha * e;
+        ctx.font = '700 20px Unbounded, Manrope, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(160,180,255,.8)';
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = '#fff';
+        ctx.fillText(fp.name, zx, zy - zr - 22);
+        ctx.shadowBlur = 0;
+      }
+
+      // спутники вокруг планеты. Орбиты далеко: даже в ближней точке
+      // эллипса (наклон .75) зазор до поверхности планеты > 30% её радиуса
+      const myMoons = moons.filter(m => m.planet === fi);
+      myMoons.forEach(m => {
+        if (!reduced && !m.hover) m.angle += m.speed * dt;
+        m.hovT += ((m.hover ? 1 : 0) - m.hovT) * Math.min(1, dt * 8);
+        m.x = zx + Math.cos(m.angle) * zr * m.dist * 2.1;
+        m.y = zy + Math.sin(m.angle) * zr * m.dist * 2.1 * .75;
+        m.r = Math.max(3, m.size * (zr / 60) * 1.2);
+      });
+
+      // орбиты спутников
+      ctx.globalAlpha = st.alpha * e;
+      myMoons.forEach(m => {
+        ctx.strokeStyle = 'rgba(255,255,255,.14)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(zx, zy, zr * m.dist * 2.1, zr * m.dist * 2.1 * .75, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      // спутники (шарики)
+      myMoons.forEach(m => {
+        if (m.hovT > .02) {
+          const gl = ctx.createRadialGradient(m.x, m.y, m.r * .8, m.x, m.y, m.r * 2.6);
+          gl.addColorStop(0, 'rgba(' + m.glow + ',' + (.5 * m.hovT * e) + ')');
+          gl.addColorStop(1, 'rgba(' + m.glow + ',0)');
+          ctx.fillStyle = gl;
+          ctx.beginPath(); ctx.arc(m.x, m.y, m.r * 2.6, 0, Math.PI * 2); ctx.fill();
+        }
+        const mg = ctx.createRadialGradient(m.x - m.r * .3, m.y - m.r * .35, m.r * .1, m.x, m.y, m.r);
+        mg.addColorStop(0, m.top); mg.addColorStop(.55, m.mid); mg.addColorStop(1, m.bot);
+        ctx.fillStyle = mg;
+        ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.fill();
+        if (m.hovT > .02) {
+          ctx.strokeStyle = 'rgba(255,255,255,' + (.6 * m.hovT) + ')';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(m.x, m.y, m.r + 3, 0, Math.PI * 2); ctx.stroke();
+        }
+      });
+
+      // ссылки-спутники: зона клика чуть больше луны, но не перекрывает планету
+      moons.forEach(m => {
+        if (!m.el) return;
+        const mine = m.planet === fi;
+        const d = m.r * 2.2;
+        m.el.style.left = (mine ? m.x : -9999) + 'px';
+        m.el.style.top = (mine ? m.y - PAD : 0) + 'px';
+        m.el.style.width = d + 'px';
+        m.el.style.height = d + 'px';
+        m.el.style.pointerEvents = (mine && e > .6) ? 'auto' : 'none';
+      });
+      // зона солнца отключена в зуме; зона раскрытой планеты — активна (клик = назад)
+      if (sunEl) sunEl.style.pointerEvents = 'none';
+      planets.forEach(p => {
+        if (!p.el) return;
+        if (p === fp) {
+          const d = zr * 2;
+          p.el.style.left = zx + 'px';
+          p.el.style.top = (zy - PAD) + 'px';
+          p.el.style.width = d + 'px';
+          p.el.style.height = d + 'px';
+          p.el.style.pointerEvents = (e > .6) ? 'auto' : 'none';
+        } else {
+          p.el.style.pointerEvents = 'none';
+        }
+      });
+    }
+
+    // радиус орбит текущего состояния
+    let curOuter = 0;
+    function outerOf(st) {
+      curOuter = Math.min(W * .8, H * 1.05) * st.scale;
+      return curOuter;
+    }
+
+    function drawStarGlow(cx, cy, glowR, pulse, alpha) {
+      [[2.2, .5], [4.5, .22], [8, .1]].forEach(([k, a]) => {
+        const g = ctx.createRadialGradient(cx, cy, glowR * .2, cx, cy, glowR * k);
+        g.addColorStop(0, 'rgba(255,200,90,' + (a * pulse) + ')');
+        g.addColorStop(1, 'rgba(255,140,40,0)');
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, glowR * k, 0, Math.PI * 2); ctx.fill();
+      });
+    }
+
     requestAnimationFrame(frame);
   }
 
